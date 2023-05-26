@@ -8,4 +8,7 @@ Work in progress C/C++ Code Generation Library for Scala; many TODO's remain:
 Goal: be as to Scala as [cgen](https://documen.tician.de/cgen/index.html) is to Python.
 
 Short-term non-goals:
+- To parse C/C++ code and produce an AST; while feasible, not immediately practical.
 - To have a restricted, C-only code generator; C++ is the focus; treat C as a subset.
+- To implement a "concrete" syntax tree that preserves whitespace (a la Python's libcst).
+- To support various whitespace output formats (Google, LLVM, etc.).
