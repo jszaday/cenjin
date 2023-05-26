@@ -14,9 +14,9 @@ abstract class Visitor[Context, Result] {
     def visit(node: Node)(implicit ctx: Context): Result = {
         node match {
             case declarator: Declarator => visitDeclarator(declarator)
+            case preprocessor: Preprocessor => visitPreprocessor(preprocessor)
             case expression: Expression => visitExpression(expression)
             case `type`: Type => visitType(`type`)
-            case text: Text => visitText(text)
             case _ => error(node, Some(unrecognized))
         }
     }
@@ -55,4 +55,19 @@ abstract class Visitor[Context, Result] {
 
     def visitText(text: Text)(implicit ctx: Context): Result
     def visitValue(value: Value)(implicit ctx: Context): Result
+
+    def visitPreprocessor(preprocessor: Preprocessor)(implicit ctx: Context): Result = {
+        preprocessor match {
+            case comment: Comment => visitComment(comment)
+            case define: Define => visitDefine(define)
+            case include: Include => visitInclude(include)
+            case pragma: Pragma => visitPragma(pragma)
+        }
+    }
+
+    def visitComment(comment: Comment)(implicit ctx: Context): Result
+    def visitDefine(define: Define)(implicit ctx: Context): Result
+    def visitInclude(include: Include)(implicit ctx: Context): Result
+    def visitPragma(pragma: Pragma)(implicit ctx: Context): Result
+
 }

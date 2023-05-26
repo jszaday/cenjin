@@ -4,9 +4,16 @@ import com.justinszaday.cenjin.ast._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val value = Value("int", "x", Some("42"))
     val visitor = new CppCodeGenerator
-    implicit val ctx = new CppCodeGenerator.Context
-    println(visitor.visit(value))  // => int x = 42
+    implicit val ctx: CppCodeGenerator.Context = new CppCodeGenerator.Context
+
+    val nodes = List(
+      Include("cstdio", system = true),  // => #include <cstdio>
+      Value("int", "x", Some("42"))      // => int x = 42
+    )
+
+    for (node <- nodes) {
+      println(visitor.visit(node))
+    }
   }
 }
