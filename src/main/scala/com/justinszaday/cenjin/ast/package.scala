@@ -4,6 +4,13 @@ import scala.language.implicitConversions
 
 package object ast {
 
+  object AccessSpecifier extends Enumeration {
+    type AccessSpecifier = super.Value
+    val Private, Protected, Public = super.Value
+  }
+
+  import AccessSpecifier._
+
   trait Declarator extends Node
 
   trait Expression extends Node
@@ -20,8 +27,6 @@ package object ast {
   }
 
   class Node
-
-  import AccessSpecifier._
 
   case class Block(var statements: List[Node]) extends Node
 
@@ -74,11 +79,6 @@ package object ast {
 
   // Enables using text in place of most nodes.
   case class Text(var text: String) extends Node with Declarator with Expression with Preprocessor with Type
-
-  object AccessSpecifier extends Enumeration {
-    type AccessSpecifier = super.Value
-    val Private, Protected, Public = super.Value
-  }
 
   implicit def string2text(text: String): Text = Text(text)
 }

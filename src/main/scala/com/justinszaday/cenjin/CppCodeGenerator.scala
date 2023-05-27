@@ -43,19 +43,42 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
 
-  override def visitBlock(block: Block)(implicit ctx: Context): String = ???
+  def joinStatements(lines: List[String]): String = {
+    def addSemicolon(line: String): String = {
+      if (line.endsWith("}") || line.endsWith(";")) {
+        line
+      } else {
+        s"$line;"
+      }
+    }
+
+    lines.map(addSemicolon(_) + "\n").mkString("")
+  }
+
+  override def visitBlock(block: Block)(implicit ctx: Context): String = {
+    s"{\n${joinStatements(block.statements.map(visit))}}"
+  }
 
   override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
-    "extern " + (if (extern.c) "\"C\" " else "") + (extern.fields match {
-      case field :: Nil => visitDeclarator(field)
-      case fields => "{\n" + fields.map(visitDeclarator(_) + ";\n").mkString("") + "}"
-    })
+    "extern " + (if (extern.c) "\"C\" " else "") + {
+      extern.fields match {
+        case field :: Nil => visitDeclarator(field)
+        case fields => s"{\n${joinStatements(fields.map(visitDeclarator))}}"
+      }
+    }
   }
 
   override def visitFunction(function: Function)(implicit ctx: Context): String = {
     val returnType = visitType(function.returnType)
     val prefixType = if (function.arrowReturnType) "auto" else returnType
     val postfixType = if (function.arrowReturnType) s" -> $returnType" else ""
-    prefixType + " " + function.name + "()" + postfixType
+    prefixType + " " + function.name + "(" + {
+      function.args.map(visitValue).mkString(", ")
+    } + ")" + postfixType + {
+      function.body match {
+        case Some(block) => visitBlock(block)
+        case None => ""
+      }
+    }
   }
 }

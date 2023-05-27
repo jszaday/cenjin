@@ -41,4 +41,22 @@ class DeclaratorTests extends AnyFunSuite {
     val extern = Extern(List(foo), c = true)
     f.visit(extern) shouldEqual "extern \"C\" void foo()"
   }
+
+  test("empty function with one argument") {
+    val f = fixture
+    val foo = Function("void", "foo", List(Value("int", "bar", None)), None)
+    f.visit(foo) shouldEqual "void foo(int bar)"
+  }
+
+  test("empty function with multiple arguments") {
+    val f = fixture
+    val foo = Function("void", "foo", List(Value("int", "bar", None), Value("int", "baz", None)), None)
+    f.visit(foo) shouldEqual "void foo(int bar, int baz)"
+  }
+
+  test("empty function with no arguments and arrow return type") {
+    val f = fixture
+    val foo = Function("int", "foo", List(), None, arrowReturnType = true)
+    f.visit(foo) shouldEqual "auto foo() -> int"
+  }
 }
