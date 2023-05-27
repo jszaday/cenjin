@@ -18,13 +18,6 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   override def visitText(text: Text)(implicit ctx: Context): String = text.text
 
-  override def visitValue(value: Value)(implicit ctx: Context): String = {
-    s"${visitType(value.`type`)} ${value.name}" + (value.default match {
-      case Some(node: Expression) => s" = ${visitExpression(node)}"
-      case None => ""
-    })
-  }
-
   override def visitComment(comment: Comment)(implicit ctx: Context): String = {
     s"//${if (comment.skipSpace) "" else " "}${comment.text}"
   }
@@ -43,22 +36,6 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
 
-  def joinStatements(lines: List[String]): String = {
-    def addSemicolon(line: String): String = {
-      if (line.endsWith("}") || line.endsWith(";")) {
-        line
-      } else {
-        s"$line;"
-      }
-    }
-
-    lines.map(addSemicolon(_) + "\n").mkString("")
-  }
-
-  override def visitBlock(block: Block)(implicit ctx: Context): String = {
-    s"{\n${joinStatements(block.statements.map(visit))}}"
-  }
-
   override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
     "extern " + (if (extern.c) "\"C\" " else "") + {
       extern.fields match {
@@ -76,9 +53,57 @@ class CppCodeGenerator extends Visitor[Context, String] {
       function.args.map(visitValue).mkString(", ")
     } + ")" + postfixType + {
       function.body match {
-        case Some(block) => visitBlock(block)
+        case Some(block) => s" ${visitBlock(block)}"
         case None => ""
       }
     }
+  }
+
+  override def visitValue(value: Value)(implicit ctx: Context): String = {
+    s"${visitType(value.`type`)} ${value.name}" + (value.default match {
+      case Some(node: Expression) => s" = ${visitExpression(node)}"
+      case None => ""
+    })
+  }
+
+  override def visitBlock(block: Block)(implicit ctx: Context): String = {
+    s"{\n${joinStatements(block.statements.map(visit))}}"
+  }
+
+  def joinStatements(lines: List[String]): String = {
+    def addSemicolon(line: String): String = {
+      if (line.endsWith("}") || line.endsWith(";")) {
+        line
+      } else {
+        s"$line;"
+      }
+    }
+
+    lines.map(addSemicolon(_) + "\n").mkString("")
+  }
+
+  override def visitTemplateArgument(templateArgument: TemplateArgument)(implicit ctx: Context): String = {
+    {
+      templateArgument.template match {
+        case Some(template) => s"${visitTemplate(template)} "
+        case None => ""
+      }
+    } + visitType(templateArgument.`type`) + {
+      if (templateArgument.ellipses) "..." else ""
+    } + {
+      templateArgument.name match {
+        case Some(name) => s" $name"
+        case None => ""
+      }
+    } + {
+      templateArgument.default match {
+        case Some(expression) => s" = ${visitExpression(expression)}"
+        case None => ""
+      }
+    }
+  }
+
+  override def visitTemplate(template: Template)(implicit ctx: Context): String = {
+    s"template <${template.args.map(visitTemplateArgument).mkString(", ")}>\n${visitDeclarator(template.target)}"
   }
 }

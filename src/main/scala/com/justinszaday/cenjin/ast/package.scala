@@ -44,9 +44,17 @@ package object ast {
 
   case class Member[A](accessSpecifier: Option[AccessSpecifier], value: A) extends Node
 
-  case class Template(var args: Either[Expression, Type], var target: Declarator) extends Declarator
+  case class TemplateArgument(
+                               var `type`: Type, // class, typename, etc.
+                               var name: Option[String],
+                               var default: Option[Expression] = None,
+                               var ellipses: Boolean = false,
+                               var template: Option[Template] = None
+                             ) extends Node
 
-  case class Value(var `type`: Type, var name: String, var default: Option[Expression]) extends Declarator
+  case class Template(var args: List[TemplateArgument], var target: Declarator) extends Declarator
+
+  case class Value(var `type`: Type, var name: String, var default: Option[Expression] = None) extends Declarator
 
   case class Function(
                        var returnType: Type,

@@ -59,4 +59,28 @@ class DeclaratorTests extends AnyFunSuite {
     val foo = Function("int", "foo", List(), None, arrowReturnType = true)
     f.visit(foo) shouldEqual "auto foo() -> int"
   }
+
+  test("simple typename") {
+    val f = fixture
+    val arg = TemplateArgument("typename", Some("T"))
+    f.visit(arg) shouldEqual "typename T"
+  }
+
+  test("simple typename with ellipses") {
+    val f = fixture
+    val arg = TemplateArgument("typename", Some("Ts"), ellipses = true)
+    f.visit(arg) shouldEqual "typename... Ts"
+  }
+
+  test("simple typename with default") {
+    val f = fixture
+    val arg = TemplateArgument("size_t", Some("N"), default = Some("42"))
+    f.visit(arg) shouldEqual "size_t N = 42"
+  }
+
+  test("simple typename with default and no name") {
+    val f = fixture
+    val arg = TemplateArgument("class", None, default = Some("void"))
+    f.visit(arg) shouldEqual "class = void"
+  }
 }
