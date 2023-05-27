@@ -17,9 +17,12 @@ abstract class Visitor[Context, Result] {
             case preprocessor: Preprocessor => visitPreprocessor(preprocessor)
             case expression: Expression => visitExpression(expression)
             case `type`: Type => visitType(`type`)
+            case block: Block => visitBlock(block)
             case _ => error(node, Some(unrecognized))
         }
     }
+
+    def visitBlock(block: Block)(implicit ctx: Context): Result
 
     def visitType(`type`: Type)(implicit ctx: Context): Result = {
         `type` match {
@@ -30,10 +33,16 @@ abstract class Visitor[Context, Result] {
     def visitDeclarator(declarator: Declarator)(implicit ctx: Context): Result = {
         declarator match {
             case classLike: ClassLike => visitClassLike(classLike)
+            case extern: Extern => visitExtern(extern)
+            case function: Function => visitFunction(function)
             case value: Value => visitValue(value)
             case text: Text => visitText(text)
         }
     }
+
+    def visitExtern(extern: Extern)(implicit ctx: Context): Result
+
+    def visitFunction(function: Function)(implicit ctx: Context): Result
 
     def visitClassLike(classLike: ClassLike)(implicit ctx: Context): Result = {
         classLike match {

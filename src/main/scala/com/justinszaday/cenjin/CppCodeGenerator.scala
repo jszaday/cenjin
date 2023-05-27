@@ -19,11 +19,10 @@ class CppCodeGenerator extends Visitor[Context, String] {
   override def visitText(text: Text)(implicit ctx: Context): String = text.text
 
   override def visitValue(value: Value)(implicit ctx: Context): String = {
-    s"${visitType(value.`type`)} ${value.name}" + (
-      value.default match {
-        case Some(node: Expression) => s" = ${visitExpression(node)}"
-        case None => ""
-      })
+    s"${visitType(value.`type`)} ${value.name}" + (value.default match {
+      case Some(node: Expression) => s" = ${visitExpression(node)}"
+      case None => ""
+    })
   }
 
   override def visitComment(comment: Comment)(implicit ctx: Context): String = {
@@ -43,4 +42,20 @@ class CppCodeGenerator extends Visitor[Context, String] {
   }
 
   override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
+
+  override def visitBlock(block: Block)(implicit ctx: Context): String = ???
+
+  override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
+    "extern " + (if (extern.c) "\"C\" " else "") + (extern.fields match {
+      case field :: Nil => visitDeclarator(field)
+      case fields => "{\n" + fields.map(visitDeclarator(_) + ";\n").mkString("") + "}"
+    })
+  }
+
+  override def visitFunction(function: Function)(implicit ctx: Context): String = {
+    val returnType = visitType(function.returnType)
+    val prefixType = if (function.arrowReturnType) "auto" else returnType
+    val postfixType = if (function.arrowReturnType) s" -> $returnType" else ""
+    prefixType + " " + function.name + "()" + postfixType
+  }
 }
