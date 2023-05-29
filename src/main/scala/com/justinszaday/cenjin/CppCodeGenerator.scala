@@ -6,7 +6,9 @@ import com.justinszaday.cenjin.ast._
 import scala.collection.SeqView
 
 object CppCodeGenerator {
-  class Context
+  class Context {
+    var indentation: Int = 0
+  }
 }
 
 class CppCodeGenerator extends Visitor[Context, String] {
@@ -77,6 +79,15 @@ class CppCodeGenerator extends Visitor[Context, String] {
     }
   }
 
+  def visitNamespace(namespace: Namespace)(implicit ctx: Context): String = {
+    val name = namespace.name match {
+      case Some(name) => s" $name"
+      case None => ""
+    }
+    val fields = namespace.fields.view.map(visitDeclarator)
+    s"namespace$name ${visitBlockLike(fields)}"
+  }
+
   override def visitValue(value: Value)(implicit ctx: Context): String = {
     s"${visitType(value.`type`)} ${value.name}" + (value.default match {
       case Some(node: Expression) => s" = ${visitExpression(node)}"
@@ -92,15 +103,24 @@ class CppCodeGenerator extends Visitor[Context, String] {
     if (lines.isEmpty) {
       "{}"
     } else {
-      def addEndLine(line: String): String = {
+      ctx.indentation += 2
+
+      val prefix = " " * ctx.indentation
+      val suffix = " " * (ctx.indentation - 2)
+
+      def formatLine(line: String): String = {
         if (line.endsWith("{") || line.endsWith("}") || line.endsWith(";")) {
-          s"$line"
+          s"$prefix$line\n"
         } else {
-          s"$line;\n"
+          s"$prefix$line;\n"
         }
       }
 
-      s"{\n${lines.map(addEndLine).mkString("")}}"
+      val result = s"{\n${lines.map(formatLine).mkString("")}$suffix}"
+
+      ctx.indentation -= 2
+
+      result
     }
   }
 

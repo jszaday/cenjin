@@ -16,6 +16,19 @@ class DeclaratorTests extends AnyFunSuite {
     }
   }
 
+  test("nested namespaces") {
+    val f = fixture
+    val baz = Namespace(Some("baz"), Nil)
+    val bar = Namespace(Some("bar"), List(baz))
+    val foo = Namespace(Some("foo"), List(bar))
+    f.visit(foo) shouldEqual
+      """namespace foo {
+        |  namespace bar {
+        |    namespace baz {}
+        |  }
+        |}""".stripMargin
+  }
+
   test("extern with multiple members") {
     val f = fixture
     val foo = Function("void", "foo", Nil, None)
@@ -23,8 +36,8 @@ class DeclaratorTests extends AnyFunSuite {
     val extern = Extern(List(foo, bar))
     f.visit(extern) shouldEqual
       """extern {
-        |void foo();
-        |void bar();
+        |  void foo();
+        |  void bar();
         |}""".stripMargin
   }
 
