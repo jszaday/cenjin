@@ -36,6 +36,7 @@ abstract class Visitor[Context, Result] {
       case extern: Extern => visitExtern(extern)
       case function: Function => visitFunction(function)
       case namespace: Namespace => visitNamespace(namespace)
+      case namespaceAlias: NamespaceAlias => visitNamespaceAlias(namespaceAlias)
       case template: Template => visitTemplate(template)
       case value: Value => visitValue(value)
       case text: Text => visitText(text)
@@ -94,4 +95,6 @@ abstract class Visitor[Context, Result] {
   def visitPragma(pragma: Pragma)(implicit ctx: Context): Result
 
   def visitNamespace(namespace: Namespace)(implicit ctx: Context): Result
+
+  def visitNamespaceAlias(namespaceAlias: NamespaceAlias)(implicit ctx: Context): Result
 }

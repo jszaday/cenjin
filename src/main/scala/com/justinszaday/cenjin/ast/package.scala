@@ -40,6 +40,8 @@ package object ast {
 
   case class Extern(var fields: List[Declarator], var c: Boolean = false) extends Declarator
 
+  case class NamespaceAlias(var aliasName: String, var nsName: String) extends Declarator
+
   case class Namespace(var name: Option[String], var fields: List[Declarator]) extends Declarator
 
   case class Member[A](accessSpecifier: Option[AccessSpecifier], value: A) extends Node

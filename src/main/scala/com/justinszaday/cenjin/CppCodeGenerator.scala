@@ -79,13 +79,17 @@ class CppCodeGenerator extends Visitor[Context, String] {
     }
   }
 
-  def visitNamespace(namespace: Namespace)(implicit ctx: Context): String = {
+  override def visitNamespace(namespace: Namespace)(implicit ctx: Context): String = {
     val name = namespace.name match {
       case Some(name) => s" $name"
       case None => ""
     }
     val fields = namespace.fields.view.map(visitDeclarator)
     s"namespace$name ${visitBlockLike(fields)}"
+  }
+
+  override def visitNamespaceAlias(namespaceAlias: NamespaceAlias)(implicit ctx: Context): String = {
+    s"namespace ${namespaceAlias.aliasName} = ${namespaceAlias.nsName}"
   }
 
   override def visitValue(value: Value)(implicit ctx: Context): String = {

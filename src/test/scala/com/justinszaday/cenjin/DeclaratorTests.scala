@@ -29,6 +29,12 @@ class DeclaratorTests extends AnyFunSuite {
         |}""".stripMargin
   }
 
+  test("namespace alias") {
+    val f = fixture
+    val foo = NamespaceAlias("foo", "bar")
+    f.visit(foo) shouldEqual "namespace foo = bar"
+  }
+
   test("extern with multiple members") {
     val f = fixture
     val foo = Function("void", "foo", Nil, None)
