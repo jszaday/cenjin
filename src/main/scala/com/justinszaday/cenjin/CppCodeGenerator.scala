@@ -3,6 +3,8 @@ package com.justinszaday.cenjin
 import com.justinszaday.cenjin.CppCodeGenerator.Context
 import com.justinszaday.cenjin.ast._
 
+import scala.collection.SeqView
+
 object CppCodeGenerator {
   class Context
 }
@@ -15,6 +17,22 @@ class CppCodeGenerator extends Visitor[Context, String] {
   override def visitStruct(struct: Struct)(implicit ctx: Context): String = ???
 
   override def visitUnion(union: Union)(implicit ctx: Context): String = ???
+
+  def visitMember[A](member: Member[A])(implicit ctx: Context): String = ???
+
+  override def visitClassLike(classLike: ClassLike)(implicit ctx: Context): String = {
+    val keyword = classLike match {
+      case _: Class => "class"
+      case _: Struct => "struct"
+      case _: Union => "union"
+    }
+    // TODO(jszaday): implement the handling for extends
+    val alignas = classLike.alignas match {
+      case Some(expression) => s"alignas(${visitExpression(expression)}) "
+      case None => ""
+    }
+    s"$keyword $alignas${classLike.name} ${visitBlockLike(classLike.fields.view.map(visitMember))};"
+  }
 
   override def visitText(text: Text)(implicit ctx: Context): String = text.text
 
@@ -40,7 +58,7 @@ class CppCodeGenerator extends Visitor[Context, String] {
     "extern " + (if (extern.c) "\"C\" " else "") + {
       extern.fields match {
         case field :: Nil => visitDeclarator(field)
-        case fields => s"{\n${joinStatements(fields.map(visitDeclarator))}}"
+        case fields => visitBlockLike(fields.view.map(visitDeclarator))
       }
     }
   }
@@ -67,19 +85,23 @@ class CppCodeGenerator extends Visitor[Context, String] {
   }
 
   override def visitBlock(block: Block)(implicit ctx: Context): String = {
-    s"{\n${joinStatements(block.statements.map(visit))}}"
+    visitBlockLike(block.statements.view.map(visit))
   }
 
-  def joinStatements(lines: List[String]): String = {
-    def addSemicolon(line: String): String = {
-      if (line.endsWith("}") || line.endsWith(";")) {
-        line
-      } else {
-        s"$line;"
+  def visitBlockLike(lines: SeqView[String])(implicit ctx: Context): String = {
+    if (lines.isEmpty) {
+      "{}"
+    } else {
+      def addEndLine(line: String): String = {
+        if (line.endsWith("{") || line.endsWith("}") || line.endsWith(";")) {
+          s"$line"
+        } else {
+          s"$line;\n"
+        }
       }
-    }
 
-    lines.map(addSemicolon(_) + "\n").mkString("")
+      s"{\n${lines.map(addEndLine).mkString("")}}"
+    }
   }
 
   override def visitTemplateArgument(templateArgument: TemplateArgument)(implicit ctx: Context): String = {

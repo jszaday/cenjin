@@ -83,4 +83,14 @@ class DeclaratorTests extends AnyFunSuite {
     val arg = TemplateArgument("class", None, default = Some("void"))
     f.visit(arg) shouldEqual "class = void"
   }
+
+  test("template class with no members") {
+    val f = fixture
+    val arg = TemplateArgument("typename", Some("T"))
+    val `class` = Class("Array", Nil, Nil)
+    val template = Template(List(arg), `class`)
+    f.visit(template) shouldEqual
+      """template <typename T>
+        |class Array {};""".stripMargin
+  }
 }

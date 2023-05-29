@@ -68,21 +68,21 @@ package object ast {
                     var name: String,
                     var fields: List[Member[Declarator]],
                     var `extends`: List[Member[Type]],
-                    var alignas: Option[Expression]
+                    var alignas: Option[Expression] = None
                   ) extends ClassLike
 
   case class Struct(
                      var name: String,
                      var fields: List[Member[Declarator]],
                      var `extends`: List[Member[Type]],
-                     var alignas: Option[Expression]
+                     var alignas: Option[Expression] = None
                    ) extends ClassLike
 
   case class Union(
                     var name: String,
                     var fields: List[Member[Declarator]],
                     var `extends`: List[Member[Type]],
-                    var alignas: Option[Expression]
+                    var alignas: Option[Expression] = None
                   ) extends ClassLike
 
   // Enables using text in place of most nodes.
