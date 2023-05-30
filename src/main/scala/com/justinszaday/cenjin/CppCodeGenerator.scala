@@ -57,6 +57,10 @@ class CppCodeGenerator extends Visitor[Context, String] {
   override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
 
   override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
+    if (extern.fields.lengthIs != 1 && extern.linkage.isEmpty) {
+      throw new IllegalArgumentException("extern with multiple members must have linkage")
+    }
+
     "extern " + {
       extern.linkage match {
         case Some(value) => s"\"$value\" "
