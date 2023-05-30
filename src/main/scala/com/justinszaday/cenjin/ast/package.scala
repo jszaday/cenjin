@@ -38,7 +38,11 @@ package object ast {
 
   case class Pragma(var value: String) extends Preprocessor
 
-  case class Extern(var fields: List[Declarator], var c: Boolean = false) extends Declarator
+  case class Extern(var fields: List[Declarator], var linkage: Option[String] = None) extends Declarator {
+    if (fields.lengthIs != 1 && linkage.isEmpty) {
+      throw new IllegalArgumentException("extern with multiple members must have linkage")
+    }
+  }
 
   case class NamespaceAlias(var aliasName: String, var nsName: String) extends Declarator
 

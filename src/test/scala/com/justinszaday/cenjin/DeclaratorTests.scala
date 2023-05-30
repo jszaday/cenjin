@@ -35,16 +35,26 @@ class DeclaratorTests extends AnyFunSuite {
     f.visit(foo) shouldEqual "namespace foo = bar"
   }
 
-  test("extern with multiple members") {
+  test("extern with multiple members and linkage") {
+    val f = fixture
+    val foo = Function("void", "foo", Nil, None)
+    val bar = Function("void", "bar", Nil, None)
+    val extern = Extern(List(foo, bar), Some("C"))
+    f.visit(extern) shouldEqual
+      """extern "C" {
+        |  void foo();
+        |  void bar();
+        |}""".stripMargin
+  }
+
+  test("extern with multiple members must have linkage") {
     val f = fixture
     val foo = Function("void", "foo", Nil, None)
     val bar = Function("void", "bar", Nil, None)
     val extern = Extern(List(foo, bar))
-    f.visit(extern) shouldEqual
-      """extern {
-        |  void foo();
-        |  void bar();
-        |}""".stripMargin
+    assertThrows[IllegalArgumentException] {
+      f.visit(extern)
+    }
   }
 
   test("extern with one member") {
@@ -54,10 +64,10 @@ class DeclaratorTests extends AnyFunSuite {
     f.visit(extern) shouldEqual "extern void foo()"
   }
 
-  test("extern c with one member") {
+  test("extern with linkage and one member") {
     val f = fixture
     val foo = Function("void", "foo", Nil, None)
-    val extern = Extern(List(foo), c = true)
+    val extern = Extern(List(foo), Some("C"))
     f.visit(extern) shouldEqual "extern \"C\" void foo()"
   }
 

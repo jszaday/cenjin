@@ -57,7 +57,12 @@ class CppCodeGenerator extends Visitor[Context, String] {
   override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
 
   override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
-    "extern " + (if (extern.c) "\"C\" " else "") + {
+    "extern " + {
+      extern.linkage match {
+        case Some(value) => s"\"$value\" "
+        case None => ""
+      }
+    } + {
       extern.fields match {
         case field :: Nil => visitDeclarator(field)
         case fields => visitBlockLike(fields.view.map(visitDeclarator))
