@@ -1,5 +1,6 @@
 package com.justinszaday.cenjin
 
+import com.justinszaday.cenjin.UnitFunSuite
 import com.justinszaday.cenjin.ast._
 import com.justinszaday.cenjin.ast.cpp._
 import com.justinszaday.cenjin.ast.cpp.declarators._
@@ -8,18 +9,7 @@ import com.justinszaday.cenjin.ast.cpp.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-class DeclaratorTests extends AnyFunSuite {
-  def fixture = new Fixture
-
-  class Fixture {
-    val codeGenerator = new CppCodeGenerator
-    val ctx = new CppCodeGenerator.Context
-
-    def visit(node: Node): String = {
-      codeGenerator.visit(node)(ctx)
-    }
-  }
-
+class DeclaratorFunSuite extends UnitFunSuite {
   test("nested namespaces") {
     val f = fixture
     val baz = Namespace(Some("baz"), Nil)
