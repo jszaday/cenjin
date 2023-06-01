@@ -1,6 +1,10 @@
 package com.justinszaday.cenjin
 
 import com.justinszaday.cenjin.ast._
+import com.justinszaday.cenjin.ast.cpp._
+import com.justinszaday.cenjin.ast.cpp.declarators._
+import com.justinszaday.cenjin.ast.cpp.preprocessors._
+import com.justinszaday.cenjin.ast.cpp.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
@@ -79,7 +83,12 @@ class DeclaratorTests extends AnyFunSuite {
 
   test("empty function with multiple arguments") {
     val f = fixture
-    val foo = Function("void", "foo", List(Value("int", "bar", None), Value("int", "baz", None)), None)
+    val foo = Function(
+      "void",
+      "foo",
+      List(Value("int", "bar", None), Value("int", "baz", None)),
+      None
+    )
     f.visit(foo) shouldEqual "void foo(int bar, int baz)"
   }
 

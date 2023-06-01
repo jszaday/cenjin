@@ -1,7 +1,10 @@
 package com.justinszaday.cenjin
 
 import com.justinszaday.cenjin.CppCodeGenerator.Context
-import com.justinszaday.cenjin.ast._
+import com.justinszaday.cenjin.ast.cpp._
+import com.justinszaday.cenjin.ast.cpp.declarators._
+import com.justinszaday.cenjin.ast.cpp.preprocessors._
+import com.justinszaday.cenjin.ast.cpp.types._
 
 import scala.collection.SeqView
 
@@ -12,7 +15,9 @@ object CppCodeGenerator {
 }
 
 class CppCodeGenerator extends Visitor[Context, String] {
-  override def error(node: Node, msg: Option[String])(implicit ctx: Context): String = ???
+  override def error(node: Node, msg: Option[String])(implicit
+      ctx: Context
+  ): String = ???
 
   override def visitClass(`class`: Class)(implicit ctx: Context): String = ???
 
@@ -22,16 +27,18 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   def visitMember[A](member: Member[A])(implicit ctx: Context): String = ???
 
-  override def visitClassLike(classLike: ClassLike)(implicit ctx: Context): String = {
+  override def visitClassLike(
+      classLike: ClassLike
+  )(implicit ctx: Context): String = {
     val keyword = classLike match {
-      case _: Class => "class"
+      case _: Class  => "class"
       case _: Struct => "struct"
-      case _: Union => "union"
+      case _: Union  => "union"
     }
     // TODO(jszaday): implement the handling for extends
     val alignas = classLike.alignas match {
       case Some(expression) => s"alignas(${visitExpression(expression)}) "
-      case None => ""
+      case None             => ""
     }
     s"$keyword $alignas${classLike.name} ${visitBlockLike(classLike.fields.view.map(visitMember))};"
   }
@@ -48,33 +55,38 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   override def visitInclude(include: Include)(implicit ctx: Context): String = {
     "#include " + (if (include.system) {
-      s"<${include.filename}>"
-    } else {
-      s"\"${include.filename}\""
-    })
+                     s"<${include.filename}>"
+                   } else {
+                     s"\"${include.filename}\""
+                   })
   }
 
-  override def visitPragma(pragma: Pragma)(implicit ctx: Context): String = s"#pragma ${pragma.value}"
+  override def visitPragma(pragma: Pragma)(implicit ctx: Context): String =
+    s"#pragma ${pragma.value}"
 
   override def visitExtern(extern: Extern)(implicit ctx: Context): String = {
     if (extern.fields.lengthIs != 1 && extern.linkage.isEmpty) {
-      throw new IllegalArgumentException("extern with multiple members must have linkage")
+      throw new IllegalArgumentException(
+        "extern with multiple members must have linkage"
+      )
     }
 
     "extern " + {
       extern.linkage match {
         case Some(value) => s"\"$value\" "
-        case None => ""
+        case None        => ""
       }
     } + {
       extern.fields match {
         case field :: Nil => visitDeclarator(field)
-        case fields => visitBlockLike(fields.view.map(visitDeclarator))
+        case fields       => visitBlockLike(fields.view.map(visitDeclarator))
       }
     }
   }
 
-  override def visitFunction(function: Function)(implicit ctx: Context): String = {
+  override def visitFunction(
+      function: Function
+  )(implicit ctx: Context): String = {
     val returnType = visitType(function.returnType)
     val prefixType = if (function.arrowReturnType) "auto" else returnType
     val postfixType = if (function.arrowReturnType) s" -> $returnType" else ""
@@ -83,28 +95,32 @@ class CppCodeGenerator extends Visitor[Context, String] {
     } + ")" + postfixType + {
       function.body match {
         case Some(block) => s" ${visitBlock(block)}"
-        case None => ""
+        case None        => ""
       }
     }
   }
 
-  override def visitNamespace(namespace: Namespace)(implicit ctx: Context): String = {
+  override def visitNamespace(
+      namespace: Namespace
+  )(implicit ctx: Context): String = {
     val name = namespace.name match {
       case Some(name) => s" $name"
-      case None => ""
+      case None       => ""
     }
     val fields = namespace.fields.view.map(visitDeclarator)
     s"namespace$name ${visitBlockLike(fields)}"
   }
 
-  override def visitNamespaceAlias(namespaceAlias: NamespaceAlias)(implicit ctx: Context): String = {
+  override def visitNamespaceAlias(
+      namespaceAlias: NamespaceAlias
+  )(implicit ctx: Context): String = {
     s"namespace ${namespaceAlias.aliasName} = ${namespaceAlias.nsName}"
   }
 
   override def visitValue(value: Value)(implicit ctx: Context): String = {
     s"${visitType(value.`type`)} ${value.name}" + (value.default match {
       case Some(node: Expression) => s" = ${visitExpression(node)}"
-      case None => ""
+      case None                   => ""
     })
   }
 
@@ -137,28 +153,32 @@ class CppCodeGenerator extends Visitor[Context, String] {
     }
   }
 
-  override def visitTemplateArgument(templateArgument: TemplateArgument)(implicit ctx: Context): String = {
+  override def visitTemplateArgument(
+      templateArgument: TemplateArgument
+  )(implicit ctx: Context): String = {
     {
       templateArgument.template match {
         case Some(template) => s"${visitTemplate(template)} "
-        case None => ""
+        case None           => ""
       }
     } + visitType(templateArgument.`type`) + {
       if (templateArgument.ellipses) "..." else ""
     } + {
       templateArgument.name match {
         case Some(name) => s" $name"
-        case None => ""
+        case None       => ""
       }
     } + {
       templateArgument.default match {
         case Some(expression) => s" = ${visitExpression(expression)}"
-        case None => ""
+        case None             => ""
       }
     }
   }
 
-  override def visitTemplate(template: Template)(implicit ctx: Context): String = {
+  override def visitTemplate(
+      template: Template
+  )(implicit ctx: Context): String = {
     s"template <${template.args.map(visitTemplateArgument).mkString(", ")}>\n${visitDeclarator(template.target)}"
   }
 }
