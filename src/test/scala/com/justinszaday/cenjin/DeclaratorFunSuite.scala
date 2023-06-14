@@ -121,4 +121,15 @@ class DeclaratorFunSuite extends UnitFunSuite {
       """template <typename T>
         |class Array {};""".stripMargin
   }
+
+  test("class with public member") {
+    val f = fixture
+    val baz = Member(Some(AccessSpecifier.Public), Value("bar", "baz"))
+    val foo = Class("foo", List(baz), Nil)
+    f.visit(foo) shouldEqual
+      """class foo {
+        |  public:
+        |  bar baz;
+        |};""".stripMargin
+  }
 }

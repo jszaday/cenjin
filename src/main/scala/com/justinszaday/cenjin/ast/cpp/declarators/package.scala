@@ -7,8 +7,10 @@ import com.justinszaday.cenjin.ast.cpp.Type
 package object declarators {
 
   object AccessSpecifier extends Enumeration {
-    type AccessSpecifier = super.Value
-    val Private, Protected, Public = super.Value
+    type AccessSpecifier = AccessSpecifier.Value
+    val Private = AccessSpecifier.Value("private")
+    val Protected = AccessSpecifier.Value("protected")
+    val Public = AccessSpecifier.Value("public")
   }
 
   import AccessSpecifier._
@@ -31,8 +33,10 @@ package object declarators {
   case class Namespace(var name: Option[String], var fields: List[Declarator])
       extends Declarator
 
-  case class Member[A](accessSpecifier: Option[AccessSpecifier], value: A)
-      extends Node
+  case class Member[+A <: Node](
+      accessSpecifier: Option[AccessSpecifier.Value],
+      value: A
+  ) extends Node
 
   case class TemplateArgument(
       var `type`: Type, // class, typename, etc.

@@ -11,6 +11,7 @@ import scala.collection.SeqView
 object CppCodeGenerator {
   class Context {
     var indentation: Int = 0
+    var accessSpecifier: List[AccessSpecifier.Value] = Nil
   }
 }
 
@@ -25,22 +26,37 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
   override def visitUnion(union: Union)(implicit ctx: Context): String = ???
 
-  def visitMember[A](member: Member[A])(implicit ctx: Context): String = ???
+  def visitMember[A <: Node](
+      member: Member[A]
+  )(implicit ctx: Context): String = {
+    val accessSpecifier = member.accessSpecifier match {
+      case Some(x) if x != ctx.accessSpecifier.head => {
+        ctx.accessSpecifier = x :: ctx.accessSpecifier.tail
+        x.toString + ":" + System.lineSeparator + (" " * ctx.indentation)
+      }
+      case _ => ""
+    }
+    accessSpecifier + visit(member.value)
+  }
 
   override def visitClassLike(
       classLike: ClassLike
   )(implicit ctx: Context): String = {
-    val keyword = classLike match {
-      case _: Class  => "class"
-      case _: Struct => "struct"
-      case _: Union  => "union"
+    val (keyword, defaultAccessSpecifier) = classLike match {
+      case _: Class  => ("class", AccessSpecifier.Private)
+      case _: Struct => ("struct", AccessSpecifier.Public)
+      case _: Union  => ("union", AccessSpecifier.Public)
     }
+    ctx.accessSpecifier = defaultAccessSpecifier :: ctx.accessSpecifier
     // TODO(jszaday): implement the handling for extends
     val alignas = classLike.alignas match {
       case Some(expression) => s"alignas(${visitExpression(expression)}) "
       case None             => ""
     }
-    s"$keyword $alignas${classLike.name} ${visitBlockLike(classLike.fields.view.map(visitMember))};"
+    val result =
+      s"$keyword $alignas${classLike.name} ${visitBlockLike(classLike.fields.view.map(visitMember))};"
+    ctx.accessSpecifier = ctx.accessSpecifier.tail
+    result
   }
 
   override def visitText(text: Text)(implicit ctx: Context): String = text.text
@@ -136,12 +152,13 @@ class CppCodeGenerator extends Visitor[Context, String] {
 
       val prefix = " " * ctx.indentation
       val suffix = " " * (ctx.indentation - 2)
+      val lineSep = System.lineSeparator
 
       def formatLine(line: String): String = {
         if (line.endsWith("{") || line.endsWith("}") || line.endsWith(";")) {
-          s"$prefix$line\n"
+          s"$prefix$line$lineSep"
         } else {
-          s"$prefix$line;\n"
+          s"$prefix$line;$lineSep"
         }
       }
 
